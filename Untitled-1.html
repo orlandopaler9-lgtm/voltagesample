@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Appliance Voltage Monitoring</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef3f8;
+            color: #333;
+        }
+
+        header {
+            background: #1769aa;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 15px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 25px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #1769aa;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            background: #1769aa;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #0d4f82;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat {
+            background: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat h3 {
+            font-size: 28px;
+            color: #1769aa;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #1769aa;
+            color: white;
+        }
+
+        .normal {
+            color: green;
+            font-weight: bold;
+        }
+
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .danger {
+            color: red;
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background: #d9534f;
+            padding: 7px 12px;
+            font-size: 13px;
+        }
+
+        .delete-btn:hover {
+            background: #b52b27;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 700px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>⚡ Appliance Voltage Monitoring</h1>
+    <p>School Electrical Appliance Monitoring System</p>
+</header>
+
+<div class="container">
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+        <div class="stat">
+            <h3 id="totalAppliances">0</h3>
+            <p>Total Appliances</p>
+        </div>
+
+        <div class="stat">
+            <h3 id="normalCount">0</h3>
+            <p>Normal</p>
+        </div>
+
+        <div class="stat">
+            <h3 id="warningCount">0</h3>
+            <p>Needs Checking</p>
+        </div>
+    </div>
+
+    <br>
+
+    <!-- Input Form -->
+    <div class="card">
+        <h2>➕ Add Appliance Reading</h2>
+
+        <div class="form-group">
+            <label>Appliance Name</label>
+            <input type="text" id="applianceName"
+                   placeholder="Example: Electric Fan">
+        </div>
+
+        <div class="form-group">
+            <label>Room / Location</label>
+            <input type="text" id="location"
+                   placeholder="Example: Computer Laboratory">
+        </div>
+
+        <div class="form-group">
+            <label>Voltage Reading (V)</label>
+            <input type="number" id="voltage"
+                   placeholder="Example: 220">
+        </div>
+
+        <button onclick="addReading()">Add Reading</button>
+    </div>
+
+    <!-- Monitoring Table -->
+    <div class="card">
+        <h2>📊 Voltage Monitoring Records</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Appliance</th>
+                    <th>Location</th>
+                    <th>Voltage</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="records">
+                <!-- Records will appear here -->
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<footer>
+    <p>School Appliance Voltage Monitoring System © 2026</p>
+</footer>
+
+
+<script>
+
+    let appliances = [];
+
+    function addReading() {
+
+        const name = document.getElementById("applianceName").value;
+        const location = document.getElementById("location").value;
+        const voltage = Number(document.getElementById("voltage").value);
+
+        if (name === "" || location === "" || voltage === "") {
+            alert("Please complete all information.");
+            return;
+        }
+
+        /*
+           Example voltage range:
+           210V - 230V = Normal
+           200V - 209V or 231V - 240V = Warning
+           Below 200V or above 240V = Check
+           
+           These are example thresholds only.
+           Use the appliance manufacturer's rated voltage
+           and your school's electrical safety procedures
+           for actual monitoring.
+        */
+
+        let status;
+        let statusClass;
+
+        if (voltage >= 210 && voltage <= 230) {
+            status = "Normal";
+            statusClass = "normal";
+        } 
+        else if (voltage >= 200 && voltage <= 240) {
+            status = "Warning";
+            statusClass = "warning";
+        } 
+        else {
+            status = "Check";
+            statusClass = "danger";
+        }
+
+        const appliance = {
+            name: name,
+            location: location,
+            voltage: voltage,
+            status: status,
+            statusClass: statusClass
+        };
+
+        appliances.push(appliance);
+
+        displayRecords();
+
+        document.getElementById("applianceName").value = "";
+        document.getElementById("location").value = "";
+        document.getElementById("voltage").value = "";
+    }
+
+
+    function displayRecords() {
+
+        const table = document.getElementById("records");
+
+        table.innerHTML = "";
+
+        appliances.forEach((item, index) => {
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${item.name}</td>
+
+                <td>${item.location}</td>
+
+                <td>${item.voltage} V</td>
+
+                <td class="${item.statusClass}">
+                    ${item.status}
+                </td>
+
+                <td>
+                    <button class="delete-btn"
+                            onclick="deleteReading(${index})">
+                        Delete
+                    </button>
+                </td>
+            `;
+
+            table.appendChild(row);
+        });
+
+        updateDashboard();
+    }
+
+
+    function deleteReading(index) {
+
+        appliances.splice(index, 1);
+
+        displayRecords();
+    }
+
+
+    function updateDashboard() {
+
+        document.getElementById("totalAppliances").textContent =
+            appliances.length;
+
+        const normal = appliances.filter(
+            item => item.status === "Normal"
+        ).length;
+
+        const warning = appliances.filter(
+            item => item.status !== "Normal"
+        ).length;
+
+        document.getElementById("normalCount").textContent = normal;
+
+        document.getElementById("warningCount").textContent = warning;
+    }
+
+</script>
+
+</body>
+</html>
